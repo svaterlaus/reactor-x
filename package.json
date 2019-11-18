@@ -1,0 +1,33 @@
+{
+  "name": "reactor-x",
+  "version": "0.0.0",
+  "description": "Reactive state management.",
+  "author": "Spencer Vaterlaus",
+  "license": "MIT",
+  "main": "index.js",
+  "keywords": [
+    "observable",
+    "reactive",
+    "state"
+  ],
+  "scripts": {
+    "test": "jest"
+  },
+  "standard": {
+    "env": [
+      "node"
+    ]
+  },
+  "homepage": "https://github.com/sVaterlaus/reactor-x#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sVaterlaus/reactor-x.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sVaterlaus/reactor-x/issues"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0",
+    "standard": "^14.3.1"
+  }
+}
