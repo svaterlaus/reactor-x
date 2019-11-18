@@ -9,10 +9,11 @@ const {
 const objectPrototype = withPrototype({
   valueOf () {
     return Object.keys(this[_value]).reduce((result, key) => {
-      if (!isReactive(this[_value][key])) {
+      const value = this[_value][key]
+      if (!isReactive(value)) {
         throw new Error(`value at "${key}" property must be reactive`)
       }
-      return { ...result, [key]: this[_value][key].valueOf() }
+      return { ...result, [key]: value.valueOf() }
     }, {})
   }
 }, reactivePrototype)
