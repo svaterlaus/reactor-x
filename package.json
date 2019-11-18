@@ -29,5 +29,8 @@
   "devDependencies": {
     "jest": "^24.9.0",
     "standard": "^14.3.1"
+  },
+  "dependencies": {
+    "observable-x": "0.0.0"
   }
 }

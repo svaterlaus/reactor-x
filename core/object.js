@@ -1,6 +1,6 @@
 const { _value } = require('../lib/symbols')
+const { reactivePrototype } = require('./reactive')
 const {
-  reactivePrototype,
   withPrototype,
   isReactive,
   isObject

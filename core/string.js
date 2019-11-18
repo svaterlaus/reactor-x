@@ -1,8 +1,6 @@
 const { _value } = require('../lib/symbols')
-const {
-  reactivePrototype,
-  withPrototype
-} = require('../lib/util')
+const { reactivePrototype } = require('./reactive')
+const { withPrototype } = require('../lib/util')
 
 const stringPrototype = withPrototype({
   valueOf () {
