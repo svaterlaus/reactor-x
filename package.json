@@ -15,7 +15,8 @@
   },
   "standard": {
     "env": [
-      "node"
+      "node",
+      "jest"
     ]
   },
   "homepage": "https://github.com/sVaterlaus/reactor-x#readme",
@@ -27,6 +28,7 @@
     "url": "https://github.com/sVaterlaus/reactor-x/issues"
   },
   "devDependencies": {
+    "fast-check": "^1.19.0",
     "jest": "^24.9.0",
     "standard": "^14.3.1"
   },

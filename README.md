@@ -4,6 +4,7 @@
 🛑 **WARNING: this library is a work in progress and is not yet recommended for production.**
 
 ## todo
+- [ ] add helpful code comments
 - [ ] finish testing observable-x
 - [ ] create tests for existing modules
 - [ ] create tests for upcoming functionality
