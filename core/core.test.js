@@ -89,6 +89,17 @@ describe('Object Reactor', () => {
         })
       })
     })
+    test('should return the updated value when invoked after .update() is invoked', () => {
+      fail('not implemented')
+    })
+  })
+  describe('.get()', () => {
+    test('should throw an error when invoked with anything other than a string or array', () => {
+      fail('not implemented')
+    })
+    test('should return the reactive element at the given path, whether an array of keys, or a string using dot and/or bracket property access', () => {
+      fail('not implemented')
+    })
   })
   describe('.update()', () => {
     test('should throw an error when invoked with a POJO that contains any reactive properties', () => {
@@ -175,8 +186,36 @@ describe('Object Reactor', () => {
         })).not.toThrow(Error)
       })
     })
-    // test('should replace its inner value with the given, valid input, returning the new value', () => {
-
-    // })
+    test('should return the new value, its input, when invoked', () => {
+      fail('not implemented')
+    })
+    test('should accept a tranform function as input, returning the result of that transformation applied to its value', () => {
+      fail('not implemented')
+    })
+  })
+  describe('.subscribe()', () => {
+    test('should throw an error when invoked with anthing other than a function', () => {
+      fail('not implemented')
+    })
+    test('should sychronously invoke its callback with the current value when invoked', () => {
+      fail('not implemented')
+    })
+    test('should invoke its callback every time .update() is invoked on the same reactive object, synchronously and asynchronously', () => {
+      fail('not implemented')
+    })
+    test('should invoke its callback every time .update() is invoked on a reactive parent element', () => {
+      fail('not implemented')
+    })
+    test('should invoke its callback every time .update() is invoked on a reactive child element', () => {
+      fail('not implemented')
+    })
+  })
+  describe('.unsubscribe()', () => {
+    test('should throw an error for any input other than a number', () => {
+      fail('not implemented')
+    })
+    test('should prevent .update() from any reactive element from from invoking the callback in .subscribe()', () => {
+      fail('not implemented')
+    })
   })
 })

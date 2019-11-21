@@ -1,5 +1,5 @@
 const { Subject } = require('observable-x/core')
-const { _isReactive, _value, _subject, _reactor } = require('../lib/symbols')
+const { _isReactive, _value, _subject, _reactor, _reconcile } = require('../lib/symbols')
 
 const hasReactiveProps = obj => typeof obj === 'object'
   ? !!Object.keys(obj).filter(key => obj[key][_isReactive]).length
@@ -24,7 +24,7 @@ const reactivePrototype = {
       return value
     }, null)
   },
-  reconcile (input) {
+  [_reconcile] (input) {
     const value = input.valueOf()
     if (typeof this[_value] !== typeof value) {
       throw new Error(`cannot reconcile input of type ${typeof value} with schema of type ${typeof this[_value]}`)
@@ -39,7 +39,7 @@ const reactivePrototype = {
       ? transform(this[_value].valueOf())
       : transform
 
-    this[_value] = this.reconcile(plainValue)
+    this[_value] = this[_reconcile](plainValue)
 
     if (this[_subject]) {
       this[_subject].next(this[_value])

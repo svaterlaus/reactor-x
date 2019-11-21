@@ -1,4 +1,4 @@
-const { _value, _reactor, _type, _isReactive } = require('../lib/symbols')
+const { _value, _reactor, _type, _isReactive, _reconcile } = require('../lib/symbols')
 const { reactivePrototype } = require('./reactive')
 const { withPrototype, isObject } = require('../lib/util')
 
@@ -12,13 +12,13 @@ const objectPrototype = withPrototype({
       return { ...result, [key]: value.valueOf() }
     }, {})
   },
-  reconcile (input) {
+  [_reconcile] (input) {
     const inputValue = input.valueOf()
     if (typeof this[_value] !== typeof inputValue) {
       throw new Error(`cannot reconcile input of type ${typeof inputvalue} with schema of type ${typeof this[_value]}`)
     }
     return Object.keys(this[_value]).reduce((result, key) => {
-      return this[_reactor]({ ...result, [key]: this[_value][key].reconcile(inputValue[key]) })
+      return this[_reactor]({ ...result, [key]: this[_value][key][_reconcile](inputValue[key]) })
     }, {})
   }
 }, reactivePrototype)

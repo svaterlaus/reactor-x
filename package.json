@@ -17,6 +17,9 @@
     "env": [
       "node",
       "jest"
+    ],
+    "globals": [
+      "fail"
     ]
   },
   "homepage": "https://github.com/sVaterlaus/reactor-x#readme",
