@@ -61,6 +61,12 @@ describe('Object Reactor', () => {
   describe('.valueOf()', () => {
     test('should return a POJO without any reactive properties when invoked', () => {
       generateData((str, int, float, bool) => {
+        const testData = {
+          string: str,
+          integer: int,
+          float: float,
+          boolean: bool
+        }
         const objectValue = object({
           string: string(str),
           integer: number(int),
@@ -77,17 +83,9 @@ describe('Object Reactor', () => {
         }).valueOf()
 
         expect(objectValue).toMatchObject({
-          string: str,
-          integer: int,
-          float: float,
-          boolean: bool,
+          ...testData,
           array: [],
-          object: {
-            string: str,
-            integer: int,
-            float: float,
-            boolean: bool
-          }
+          object: testData
         })
       })
     })
@@ -133,6 +131,12 @@ describe('Object Reactor', () => {
     })
     test('should throw an error when invoked with anything other than a POJO with matching type structure or a function that returns a POJO with matching type structure', () => {
       generateData((str, int, float, bool) => {
+        const testData = {
+          string: str,
+          integer: int,
+          float: float,
+          boolean: bool
+        }
         const testObject = object({
           string: string(str),
           integer: number(int),
@@ -158,33 +162,14 @@ describe('Object Reactor', () => {
         expect(() => testObject.update(boolean(bool))).toThrow(Error)
         expect(() => testObject.update({})).toThrow(Error)
         expect(() => testObject.update({ string: str })).toThrow(Error)
-        expect(() => testObject.update({
-          string: str,
-          integer: int,
-          float: float,
-          boolean: bool,
-          array: []
-        })).toThrow(Error)
-        expect(() => testObject.update({
-          string: str,
-          integer: int,
-          float: float,
-          boolean: bool,
-          array: [],
-          object: { string: str }
-        })).toThrow(Error)
+        expect(() => testObject.update({ ...testData, array: [] })).toThrow(Error)
+        expect(() => testObject.update({ ...testData, array: [], object: { string: str } })).toThrow(Error)
 
         expect(() => testObject.update({
-          string: str,
-          integer: int,
-          float: float,
-          boolean: bool,
+          ...testData,
           array: [],
           object: {
-            string: str,
-            integer: int,
-            float: float,
-            boolean: bool,
+            ...testData,
             array: []
           }
         })).not.toThrow(Error)
