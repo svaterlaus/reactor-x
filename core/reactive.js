@@ -1,6 +1,10 @@
 const { Subject } = require('observable-x/core')
 const { _isReactive, _value, _subject, _reactor } = require('../lib/symbols')
 
+const hasReactiveProps = obj => typeof obj === 'object'
+  ? !!Object.keys(obj).filter(key => obj[key][_isReactive]).length
+  : false
+
 const reactivePrototype = {
   [_isReactive]: true,
   [_subject]: null,
@@ -28,9 +32,12 @@ const reactivePrototype = {
     return this[_reactor](value)
   },
   update (transform) {
+    if (transform[_isReactive] || hasReactiveProps(transform)) {
+      throw new Error('update() input cannot be reactive')
+    }
     const plainValue = typeof transform === 'function'
       ? transform(this[_value].valueOf())
-      : transform.valueOf()
+      : transform
 
     this[_value] = this.reconcile(plainValue)
 
