@@ -25,6 +25,20 @@ const reactivePrototype = {
       return objMap(value, prop => prop.valueOf())
     }
     return this[_value]
+  },
+  get (path) {
+    if (isArray(path)) {
+      let isFirst = true
+      return path.reduce((result, key) => {
+        const value = isFirst ? this[_value][key] : result.get(key)
+        isFirst = false
+        return value
+      }, null)
+    }
+    if (typeof path === 'string' || typeof path === 'number') {
+      return this[_value][path]
+    }
+    throw new Error(`Reactor.get() argument must be an array, string, or number . Received: ${path}`)
   }
 }
 
@@ -37,17 +51,17 @@ const reactive = state => {
   return result
 }
 
-const reactor = state => {
+const Reactor = state => {
   if (isArray(state)) {
-    return reactive(state.map(reactor))
+    return reactive(state.map(Reactor))
   }
   if (isPOJO(state)) {
-    return reactive(objMap(state, reactor))
+    return reactive(objMap(state, Reactor))
   }
   if (isScalar(state)) {
     return reactive(state)
   }
-  throw new Error(`Reactor argument must be JSON-serializable. Received: ${state}`)
+  throw new Error(`Reactor() argument must be JSON-serializable. Received: ${state}`)
 }
 
-module.exports = reactor
+module.exports = Reactor
