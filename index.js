@@ -1,6 +1,7 @@
 const { _value } = require('./lib/symbols')
 
 const { isArray } = Array
+const { keys: keysOf } = Object
 
 const isPOJO = obj => obj === null || typeof obj !== 'object'
   ? false
@@ -12,8 +13,21 @@ const isScalar = val =>
   typeof val === 'boolean' ||
   (typeof val === 'number' && val > -Infinity && val < Infinity)
 
-const objMap = (obj, transform) => Object.keys(obj)
+const objMap = (obj, transform) => keysOf(obj)
   .reduce((result, key) => ({ ...result, [key]: transform(obj[key]) }), {})
+
+const isJSONSerializable = value => {
+  if (isArray(value)) {
+    return value.reduce((result, item) => !result ? result : isJSONSerializable(item), true)
+  }
+  if (isPOJO(value)) {
+    return keysOf(value).reduce((result, key) => !result ? result : isJSONSerializable(value[key]), true)
+  }
+  if (isScalar(value)) {
+    return true
+  }
+  return false
+}
 
 const reactivePrototype = {
   valueOf () {
@@ -38,7 +52,15 @@ const reactivePrototype = {
     if (typeof path === 'string' || typeof path === 'number') {
       return this[_value][path]
     }
-    throw new Error(`Reactor.get() argument must be an array, string, or number . Received: ${path}`)
+    throw new Error(`reactor.get() argument must be an array, string, or number . Received: ${path}`)
+  },
+  update (transform) {
+    const updated = typeof transform === 'function' ? transform(this.valueOf()) : transform
+    if (!isJSONSerializable(updated)) {
+      throw new Error('reactor.update() argument must be JSON-serializable, or a function with a JSON-serializable return value')
+    }
+    this[_value] = updated
+    return this[_value]
   }
 }
 
