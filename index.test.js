@@ -93,6 +93,13 @@ describe('reactor.update()', () => {
   })
 
   test('should update the internal value of the reactive item, returning that updated value for reactor.get() and reactor.valueOf() invocations', () => {
-    fail('not implemented')
+    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+    const reactivePerson = Reactor(person)
+    expect(reactivePerson.get('name').valueOf()).toBe('Spencer')
+    console.log('reactivePerson: ', reactivePerson)
+    reactivePerson.update(p => ({ ...p, name: 'George' }))
+    console.log('reactivePerson: ', reactivePerson)
+    expect(reactivePerson.get('name').valueOf()).toBe('George')
+    expect(reactivePerson.get(['hobbies', 0]).valueOf()).toBe('programming')
   })
 })
