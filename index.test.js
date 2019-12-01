@@ -1,22 +1,22 @@
 const Reactor = require('./index')
 
 describe('Reactor()', () => {
-  test('should throw an error when given an argument that\'s not directly serializable to JSON', () => {
-    expect(() => Reactor(undefined)).toThrow(Error)
-    expect(() => Reactor(new Set())).toThrow(Error)
-    expect(() => Reactor(Array)).toThrow(Error)
-    expect(() => Reactor(Infinity)).toThrow(Error)
+  test('should return undefined when given an argument that\'s not a string, array, number, boolean, object, or null', () => {
+    expect(Reactor(undefined)).toBe(undefined)
+    expect(Reactor(new Set())).toBe(undefined)
+    expect(Reactor(new Error())).toBe(undefined)
+    expect(Reactor(Array)).toBe(undefined)
 
-    expect(() => Reactor({})).not.toThrow()
-    expect(() => Reactor([])).not.toThrow()
-    expect(() => Reactor(9)).not.toThrow()
-    expect(() => Reactor('foo')).not.toThrow()
-    expect(() => Reactor(false)).not.toThrow()
-    expect(() => Reactor(null)).not.toThrow()
+    expect(Reactor({})).not.toBe(undefined)
+    expect(Reactor([])).not.toBe(undefined)
+    expect(Reactor(9)).not.toBe(undefined)
+    expect(Reactor('foo')).not.toBe(undefined)
+    expect(Reactor(false)).not.toBe(undefined)
+    expect(Reactor(null)).not.toBe(undefined)
   })
   test('should throw an error when given an object or array that has properties, or nested properties, that don\'t directly serialize to JSON', () => {
+    console.log(Reactor({ name: 'Spencer', problem: new Error() }))
     expect(() => Reactor({ name: 'Spencer', problem: new Error() })).toThrow(Error)
-    expect(() => Reactor({ name: 'Spencer', nestedProblem: [Infinity] })).toThrow(Error)
     expect(() => Reactor(['Spencer', [[[{ veryNested: undefined }]]]])).toThrow(Error)
 
     expect(() => Reactor({ name: 'Spencer', noProblem: 'TADA' })).not.toThrow()
@@ -54,6 +54,7 @@ describe('reactor.get()', () => {
   test('should return the reactive item at the path argument', () => {
     const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
 
+    console.log(Reactor(person))
     expect(Reactor(person).get('age')).not.toBe(25)
     expect(Reactor(person).get('age').valueOf()).toBe(25)
     expect(Reactor(person).get(['hobbies', 1])).not.toBe('eating')
@@ -64,6 +65,10 @@ describe('reactor.get()', () => {
 describe('reactor.update()', () => {
   test('should throw an error when given an argument that\'s not directly serializable to JSON, or a function argument that returns a value that\'s not directly serializable to JSON', () => {
     const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+
+    const reactivePerson = Reactor(person)
+    reactivePerson.get('age').subscribe(console.log)
+    reactivePerson.update(p => ({ ...p, age: 26 }))
 
     expect(() => Reactor(person).update(undefined)).toThrow(Error)
     expect(() => Reactor(person).update(() => undefined)).toThrow(Error)
@@ -92,7 +97,7 @@ describe('reactor.update()', () => {
     expect(() => Reactor(person).update(() => ({ name: 'Bob', age: 50, hobbies: ['eating', 'sleeping', 'pooping'] }))).not.toThrow()
   })
 
-  test('should update the internal value of the reactive item, returning that updated value for reactor.get() and reactor.valueOf() invocations', () => {
+  test('should update the internal value of the reactive item, returning that updated value for reactor.get(path) and reactor.valueOf()', () => {
     const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
     const reactivePerson = Reactor(person)
     expect(reactivePerson.get('name').valueOf()).toBe('Spencer')

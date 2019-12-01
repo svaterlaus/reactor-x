@@ -5,6 +5,8 @@ const hasReactiveProps = obj => typeof obj === 'object'
   ? !!Object.keys(obj).filter(key => obj[key][_isReactive]).length
   : false
 
+const parseKeys = path => Array.isArray(path) ? path : path.split('.') // TODO handle bracket property access
+
 const reactivePrototype = {
   [_isReactive]: true,
   [_subject]: null,
@@ -15,7 +17,7 @@ const reactivePrototype = {
     if (!Array.isArray(path) && typeof path !== 'string') {
       throw new Error('get() path must be an array of strings, or a dot-separated string')
     }
-    const keys = Array.isArray(path) ? path : path.split('.') // TODO handle bracket property access
+    const keys = parseKeys(path)
 
     let isFirst = true
     return keys.reduce((result, key) => {
