@@ -1,17 +1,31 @@
 const { Subject } = require('observable-x')
-const { reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, call } = require('ramda')
+const { reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, call, complement, mapObjIndexed } = require('ramda')
+
+const isNotNil = complement(isNil)
 
 const { _value, _subject } = require('./lib/symbols')
 
 const { setPrototypeOf } = Object
 
-const isMappable = pipe(
+const isFunction = pipe(
   type,
-  anyPass([
-    equals('Array'),
-    equals('Object')
-  ])
+  equals('Function')
 )
+
+const isObject = pipe(
+  type,
+  equals('Object')
+)
+
+const isArray = pipe(
+  type,
+  equals('Array')
+)
+
+const isMappable = anyPass([
+  isArray,
+  isObject
+])
 
 const isScalar = pipe(
   type,
@@ -21,11 +35,6 @@ const isScalar = pipe(
     equals('Boolean'),
     equals('Null')
   ])
-)
-
-const isFunction = pipe(
-  type,
-  equals('Function')
 )
 
 const getKeyFromPath = curry((path, value) =>
@@ -51,41 +60,23 @@ const reactivePrototype = {
       [T, always(undefined)]
     ])(this[_value])
   },
-  update (transform) {
-    // 1. only update existing properties based on the input
-    // 2. don't bother updating identical property values
-    // 3. don't add additional properties from the input
-    // 4. update properties missing from the input with null
-    // (use basic type checking?)
+  update (transform, innerValue = this.valueOf()) {
+    const updated = when(isFunction, always(transform(innerValue)))(transform)
+    const subject = this[_subject]
 
-    const value = this.valueOf()
-    const transformed = when(isFunction, always(transform(value)))(transform)
-
-    console.log(transformed)
-
-    // this[_value] = cond([
-    //   [isMappable, map(Reactor)]
-    // ])(value)
-
-    // if (isMappable(value)) {
-    //   this[_value] = isFunction(transform) ? map()
-    // } else {
-
-    // }
-    // this[_value] = isFunction(transform)
-    //   ? isMappable(this[_value]) && map(Reactor, this[_value])
-    //   : isScalar(this[_value]) && this[_value]
-
-    // this[_value] = ifElse(
-    //   isFunction,
-    //   always(transform(this.valueOf())),
-    //   transform
-    // )(transform)
-    return this[_value]
+    return ifElse(
+      always(isObject(innerValue)),
+      mapObjIndexed((item, key) => {
+        when(isNotNil, always(subject.next(innerValue)))(subject)
+        return item.update(updated[key], innerValue[key])
+      }),
+      always(updated)
+    )(this)
   },
   subscribe (callback) {
-    this[_subject] = when(isNil, Subject(this[_value]))(this[_subject])
-    this[_subject].observe({ next: callback })
+    const value = this.valueOf()
+    this[_subject] = when(isNil, always(Subject(value)))(this[_subject])
+    return this[_subject].observe({ next: callback })
   }
 }
 
