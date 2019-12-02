@@ -1,5 +1,5 @@
 const { Subject } = require('observable-x')
-const { reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, call, complement, mapObjIndexed } = require('ramda')
+const { reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed } = require('ramda')
 
 const isNotNil = complement(isNil)
 
@@ -49,7 +49,7 @@ const reactivePrototype = {
   valueOf () {
     return ifElse(
       isMappable,
-      pipe(prop('valueOf'), call),
+      map(item => item.valueOf()), // TODO more functional approach?
       identity
     )(this[_value])
   },
