@@ -7,7 +7,7 @@ const log = label => value => {
 }
 
 const method = curry((name, args, object) => pipe(
-  tryCatch(prop(name), always(undefined)),
+  tryCatch(prop(name), always(undefined)), // TODO refactor out inneficient tryCatch behavior
   ifElse(
     isNil,
     identity,
