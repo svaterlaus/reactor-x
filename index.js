@@ -1,5 +1,5 @@
 const { Subject } = require('observable-x')
-const { __, reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, tryCatch, bind } = require('ramda')
+const { __, reduce, always, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, tryCatch, bind, both, all } = require('ramda')
 
 const log = label => value => {
   console.log(`${label}: `, value)
@@ -44,23 +44,20 @@ const isArray = pipe(
   equals('Array')
 )
 
-const isScalar = pipe(
+const isString = pipe(
   type,
-  anyPass([
-    equals('Number'),
-    equals('String'),
-    equals('Boolean'),
-    equals('Null')
-  ])
+  equals('String')
 )
 
-const getKeyFromPath = curry((path, value) =>
+const getReactiveProp = curry((path, value) => ifElse(
+  always(isObject(value)),
   reduce((target, key) => ifElse(
     isNil,
     always(prop(key, value)),
     method('get', [key])
-  )(target), null)(path)
-)
+  )(target), null),
+  always(undefined)
+)(path))
 
 const reactivePrototype = {
   valueOf () {
@@ -71,11 +68,15 @@ const reactivePrototype = {
     )(this[_value])
   },
   get (path) {
-    return cond([
-      [always(isArray(path)), getKeyFromPath(path)],
-      [always(isScalar(path)), prop(path)],
-      [T, always(undefined)]
-    ])(this[_value])
+    return ifElse(
+      isObject,
+      cond([
+        [always(both(isArray, all(isString))(path)), getReactiveProp(path)],
+        [always(isString(path)), prop(path)],
+        [T, always(undefined)]
+      ]),
+      always(undefined)
+    )(this[_value])
   },
   update (transform, innerValue = this.valueOf()) {
     const updated = when(isFunction, applyTo(innerValue))(transform)
