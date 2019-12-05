@@ -1,5 +1,27 @@
 const { Subject } = require('observable-x')
-const { reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed } = require('ramda')
+const { __, reduce, always, anyPass, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, tryCatch, bind } = require('ramda')
+
+const log = label => value => {
+  console.log(`${label}: `, value)
+  return value
+}
+
+const method = curry((name, args, object) => pipe(
+  tryCatch(prop(name), always(undefined)),
+  ifElse(
+    isNil,
+    identity,
+    pipe(
+      bind(__, object),
+      apply(__, args)
+    )
+  )
+)(object))
+
+const sideEffect = curry((fn, val) => {
+  fn(val)
+  return val
+})
 
 const isNotNil = complement(isNil)
 
@@ -22,11 +44,6 @@ const isArray = pipe(
   equals('Array')
 )
 
-const isMappable = anyPass([
-  isArray,
-  isObject
-])
-
 const isScalar = pipe(
   type,
   anyPass([
@@ -40,38 +57,44 @@ const isScalar = pipe(
 const getKeyFromPath = curry((path, value) =>
   reduce((target, key) => ifElse(
     isNil,
-    always(value[key]),
-    always(target.get(key))
+    always(prop(key, value)),
+    method('get', [key])
   )(target), null)(path)
 )
 
 const reactivePrototype = {
   valueOf () {
     return ifElse(
-      isMappable,
-      map(item => item.valueOf()), // TODO more functional approach?
+      isObject,
+      map(when(isNotNil, method('valueOf', []))),
       identity
     )(this[_value])
   },
   get (path) {
     return cond([
-      [always(isMappable(path)), getKeyFromPath(path)],
+      [always(isArray(path)), getKeyFromPath(path)],
       [always(isScalar(path)), prop(path)],
       [T, always(undefined)]
     ])(this[_value])
   },
   update (transform, innerValue = this.valueOf()) {
-    const updated = when(isFunction, always(transform(innerValue)))(transform)
+    const updated = when(isFunction, applyTo(innerValue))(transform)
     const subject = this[_subject]
 
     return ifElse(
-      always(isObject(innerValue)),
-      mapObjIndexed((item, key) => {
-        when(isNotNil, always(subject.next(innerValue)))(subject)
-        return item.update(updated[key], innerValue[key])
-      }),
-      always(updated)
-    )(this)
+      always(and(isObject(innerValue), isObject(updated))),
+      mapObjIndexed((item, key) => pipe(
+        sideEffect(when(
+          always(isNotNil(subject)),
+          always(method('next', [innerValue], subject))
+        )),
+        method('update', [prop(key, updated), prop(key, innerValue)])
+      )(item)),
+      pipe(
+        sideEffect(() => { this[_value] = updated }),
+        always(updated)
+      )
+    )(this[_value])
   },
   subscribe (callback) {
     const value = this.valueOf()
@@ -89,10 +112,10 @@ const makeReactive = state => {
   return result
 }
 
-const Reactor = state => cond([
-  [isMappable, pipe(map(Reactor), makeReactive)],
-  [isScalar, makeReactive],
-  [T, always(undefined)]
-])(state)
+const Reactor = state => ifElse(
+  isObject,
+  pipe(map(Reactor), makeReactive),
+  makeReactive
+)(state)
 
 module.exports = Reactor
