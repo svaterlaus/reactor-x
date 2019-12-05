@@ -89,7 +89,6 @@ describe('reactor.get()', () => {
       hobbies: ['programming', 'eating', 'exercise?'],
       foo: { bar: 'baz' }
     }
-
     const list = [1, 2, 3]
 
     expect(Reactor(person).get(['hobbies', '1'])).toBe(undefined)
