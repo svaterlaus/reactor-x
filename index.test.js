@@ -97,15 +97,124 @@ describe('reactor.get()', () => {
 })
 
 describe('reactor.update()', () => {
-  test('should update the value of the reactive item, returning that updated value for reactor.get(path) and reactor.valueOf()', () => {
+  test('should update the value of the reactive item given an update function or a plain value, returning that updated value for reactor.get(path) and reactor.valueOf()', () => {
     const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
     const reactivePerson = Reactor(person)
 
     expect(reactivePerson.get('name').valueOf()).toBe('Spencer')
 
-    reactivePerson.update(p => ({ ...p, name: 'George' }))
+    reactivePerson.update(p => ({ ...p, name: 'George' })) // TODO should return the plain value or the reactive value (for chaining?)
 
     expect(reactivePerson.get('name').valueOf()).toBe('George')
     expect(reactivePerson.get('hobbies').valueOf()[0]).toBe('programming')
+
+    reactivePerson.update({ name: 'Bob' })
+
+    expect(reactivePerson.valueOf()).toEqual({ name: 'Bob' })
+    expect(reactivePerson.get('name').valueOf()).toEqual('Bob')
+  })
+})
+
+describe('reactor.subscribe()', () => {
+  test('should return undefined when given anthing other than a function', () => {
+    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+    const reactivePerson = Reactor(person)
+
+    expect(reactivePerson.subscribe()).toBe(undefined)
+    expect(reactivePerson.subscribe(1)).toBe(undefined)
+    expect(reactivePerson.subscribe('a string')).toBe(undefined)
+    expect(reactivePerson.subscribe({ foo: 'bar' })).toBe(undefined)
+    expect(reactivePerson.subscribe([1, 2, 3])).toBe(undefined)
+
+    expect(reactivePerson.subscribe(() => {})).not.toBe(undefined)
+  })
+  test('should return a number when given a function argument', () => {
+    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+    const reactivePerson = Reactor(person)
+
+    expect(typeof reactivePerson.subscribe(() => {})).toBe('number')
+  })
+  test('should synchronously invoke the provided callback with the current value of the reactor when invoked', () => {
+    expect.assertions(1)
+    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+    const reactivePerson = Reactor(person)
+
+    const callback = state => {
+      expect(state).toEqual(person)
+    }
+
+    reactivePerson.subscribe(callback)
+  })
+  test('should synchronously invoke the provided callback with the updated value of the reactor when reactor.update() is invoked', () => {
+    expect.assertions(1)
+    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+    const reactivePerson = Reactor(person)
+
+    let callbackInvoked = false
+    const callback = state => {
+      if (callbackInvoked) {
+        expect(state).toEqual({ ...person, age: 26 })
+      }
+      callbackInvoked = true
+    }
+
+    reactivePerson.subscribe(callback)
+    reactivePerson.update({ ...person, age: 26 })
+  })
+  test('should invoke the provided callback with the updated value of the reactor when reactor.update() is asynchronously invoked', done => {
+    expect.assertions(1)
+    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
+    const updated = { ...person, age: 26 }
+    const reactivePerson = Reactor(person)
+
+    let callbackInvoked = false
+    const callback = state => {
+      console.log('huh?')
+      if (callbackInvoked) {
+        expect(state).toEqual(updated)
+        done()
+      }
+      callbackInvoked = true
+    }
+
+    reactivePerson.subscribe(callback)
+    setTimeout(() => {
+      reactivePerson.update(updated)
+    }, 100)
+  })
+  test('should invoke the provided callback when child properties, nested or not, are updated via their own "update" method', () => {
+    expect.assertions(1)
+    const obj = { foo: { bar: 'baz' } }
+    const reactiveObj = Reactor(obj)
+
+    let callbackInvoked = false
+    const callback = state => {
+      if (callbackInvoked) {
+        expect(state).toEqual({ foo: { bar: 'updated!' } })
+      }
+      callbackInvoked = true
+    }
+
+    reactiveObj.subscribe(callback)
+    reactiveObj.get(['foo', 'bar']).update('updated!')
+  })
+  test('should invoke the provided callback when parent objects, one or more levels up, are updated via their own "update" method', () => {
+    expect.assertions(1)
+    const obj = { foo: { bar: 'baz' } }
+    const reactiveObj = Reactor(obj)
+
+    let callbackInvoked = false
+    const callback = state => {
+      if (callbackInvoked) {
+        expect(state).toEqual('updated!')
+      }
+      callbackInvoked = true
+    }
+
+    reactiveObj.get(['foo', 'bar']).subscribe(callback)
+    reactiveObj.update(o => {
+      o.foo.bar = 'updated!'
+      return o
+    })
   })
 })
