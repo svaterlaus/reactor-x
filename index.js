@@ -6,6 +6,8 @@ const log = label => value => {
   return value
 }
 
+const wrap = value => [value]
+
 const method = curry((name, args, object) => pipe(
   tryCatch(prop(name), always(undefined)), // TODO refactor out inneficient tryCatch behavior
   ifElse(
@@ -78,26 +80,31 @@ const reactivePrototype = {
       always(undefined)
     )(this[_value])
   },
-  update (transform, innerValue = this.valueOf()) {
-    const updated = when(isFunction, applyTo(innerValue))(transform)
+  update (transform, value = this.valueOf()) {
+    const updated = when(isFunction, applyTo(value))(transform)
     const subject = this[_subject]
-
-    return ifElse(
-      always(and(isObject(innerValue), isObject(updated))),
-      mapObjIndexed((item, key) => pipe(
-        sideEffect(when(
-          always(isNotNil(subject)),
-          always(method('next', [innerValue], subject))
-        )),
-        method('update', [prop(key, updated), prop(key, innerValue)])
-      )(item)),
-      pipe(
-        sideEffect(() => { this[_value] = updated }),
-        always(updated)
-      )
-    )(this[_value])
+    if (and(isObject(value), isObject(updated))) {
+      return pipe(
+        mapObjIndexed((item, key) =>
+          method('update', [prop(key, updated), prop(key, value)])(item)
+        ),
+        sideEffect(
+          pipe(
+            wrap,
+            method('next', __, subject)
+          )
+        )
+      )(this[_value])
+    } else {
+      this[_value] = updated
+      method('next', [updated], subject)
+      return this[_value]
+    } // TODO make functional-style with Ramda
   },
   subscribe (callback) {
+    if (!isFunction(callback)) {
+      return undefined
+    }
     const value = this.valueOf()
     this[_subject] = when(isNil, always(Subject(value)))(this[_subject])
     return this[_subject].observe({ next: callback })
