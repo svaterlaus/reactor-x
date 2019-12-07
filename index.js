@@ -1,6 +1,8 @@
 const { Subject } = require('observable-x')
 const { __, reduce, always, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, tryCatch, bind, both, all } = require('ramda')
 
+const { _value, _subject, _parent } = require('./lib/symbols')
+
 const log = label => value => {
   console.log(`${label}: `, value)
   return value
@@ -26,8 +28,6 @@ const sideEffect = curry((fn, val) => {
 })
 
 const isNotNil = complement(isNil)
-
-const { _value, _subject } = require('./lib/symbols')
 
 const { setPrototypeOf } = Object
 
@@ -111,19 +111,23 @@ const reactivePrototype = {
   }
 }
 
-const makeReactive = state => {
+const makeReactive = curry((parent, state) => {
   const result = {
     [_value]: state,
+    [_parent]: parent,
     [_subject]: null
   }
   setPrototypeOf(result, reactivePrototype)
   return result
-}
+})
 
-const Reactor = state => ifElse(
-  isObject,
-  pipe(map(Reactor), makeReactive),
-  makeReactive
-)(state)
+const Reactor = state => {
+  const recur = curry((parent, innerState) => {
+    const reactiveState = makeReactive(parent, innerState)
+    reactiveState[_value] = when(isObject, map(recur(reactiveState)))(reactiveState[_value])
+    return reactiveState
+  })
+  return recur(null, state)
+}
 
 module.exports = Reactor
