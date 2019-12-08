@@ -1,5 +1,5 @@
 const { Subject } = require('observable-x')
-const { __, reduce, always, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, tryCatch, bind, both, all } = require('ramda')
+const { __, reduce, always, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, bind, both, all } = require('ramda')
 
 const { _value, _subject, _parent } = require('./lib/symbols')
 
@@ -11,7 +11,7 @@ const log = label => value => {
 const wrap = value => [value]
 
 const method = curry((name, args, object) => pipe(
-  tryCatch(prop(name), always(undefined)), // TODO refactor out inneficient tryCatch behavior
+  prop(name),
   ifElse(
     isNil,
     identity,
@@ -61,6 +61,16 @@ const getReactiveProp = curry((path, value) => ifElse(
   always(undefined)
 )(path))
 
+const notifyParents = item => {
+  const parent = prop(_parent, item)
+  if (isNotNil(parent)) {
+    const parentSubject = parent[_subject]
+    const parentValue = parent.valueOf()
+    method('next', [parentValue], parentSubject)
+    notifyParents(parent)
+  }
+}
+
 const reactivePrototype = {
   valueOf () {
     return ifElse(
@@ -80,26 +90,28 @@ const reactivePrototype = {
       always(undefined)
     )(this[_value])
   },
-  update (transform, value = this.valueOf()) {
+  update (transform, value = this.valueOf(), isInitial = true) { // TODO cleanup function
     const updated = when(isFunction, applyTo(value))(transform)
     const subject = this[_subject]
-    if (and(isObject(value), isObject(updated))) {
-      return pipe(
+    const final = ifElse(
+      always(and(isObject(value), isObject(updated))),
+      pipe(
         mapObjIndexed((item, key) =>
-          method('update', [prop(key, updated), prop(key, value)])(item)
+          method('update', [prop(key, updated), prop(key, value), false])(item)
         ),
-        sideEffect(
-          pipe(
-            wrap,
-            method('next', __, subject)
-          )
-        )
-      )(this[_value])
-    } else {
-      this[_value] = updated
-      method('next', [updated], subject)
-      return this[_value]
-    } // TODO make functional-style with Ramda
+        sideEffect(pipe(wrap, method('next', __, subject)))
+      ),
+      (input) => {
+        this[_value] = updated
+        method('next', [updated], subject)
+        return this[_value]
+      }
+    )(this[_value])
+
+    if (isInitial && isNotNil(this[_parent])) {
+      notifyParents(this)
+    }
+    return final
   },
   subscribe (callback) {
     if (!isFunction(callback)) {
