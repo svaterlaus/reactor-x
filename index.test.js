@@ -109,7 +109,7 @@ describe('reactor.update()', () => {
     expect(reactivePerson.get('hobbies').valueOf()[0]).toBe('programming')
 
     reactivePerson.update({ name: 'Bob' })
-
+    
     expect(reactivePerson.valueOf()).toEqual({ name: 'Bob' })
     expect(reactivePerson.get('name').valueOf()).toEqual('Bob')
   })
