@@ -1,14 +1,14 @@
+const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all, equals } = require('ramda')
 const { Subject } = require('observable-x')
-const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all } = require('ramda')
 
 const { _value, _subject, _parent } = require('./lib/symbols')
 const { method, isObject, isArray, isString, isFunction, sideEffect } = require('./lib/util')
 
-const isNotNil = complement(isNil)
-
 const { setPrototypeOf } = Object
 
+const isNotNil = complement(isNil)
 const isNotObject = complement(isObject)
+const notEquals = complement(equals)
 
 const getReactiveProp = curry((path, value) => ifElse(
   always(isObject(value)),
@@ -54,27 +54,29 @@ const reactivePrototype = {
     const subject = this[_subject]
     const parent = this[_parent]
 
-    const result = cond([
-      [
-        always(isObject(value) && isNotObject(updated)),
-        always(this[_value])
-      ], [
-        always(isObject(value) && isObject(updated)),
-        pipe(
-          mapObjIndexed((item, key) => item.update(updated[key], value[key], false)),
-          sideEffect(nextValue => method('next', [nextValue], subject))
-        )
-      ], [
-        T,
-        pipe(
-          sideEffect(() => {
+    if (isObject(value) && isNotObject(updated)) {
+      return this[_value]
+    }
+    const result = ifElse(
+      always(isObject(value) && isObject(updated)),
+      pipe(
+        mapObjIndexed((item, key) => item.update(updated[key], value[key], false)),
+        sideEffect(nextValue => {
+          if (notEquals(value, nextValue)) {
+            method('next', [nextValue], subject)
+          }
+        })
+      ),
+      pipe(
+        sideEffect(() => {
+          if (notEquals(this[_value], updated)) {
             this[_value] = updated
             method('next', [updated], subject)
-          }),
-          always(updated)
-        )
-      ]
-    ])(this[_value])
+          }
+        }),
+        always(updated)
+      )
+    )(this[_value])
 
     if (isInitial && isNotNil(parent)) {
       notifyParents(this)

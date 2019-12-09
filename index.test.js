@@ -208,8 +208,7 @@ describe('reactor.subscribe()', () => {
   })
   test('should invoke the provided callback when parent objects, one or more levels up, are updated via their own "update" method', () => {
     expect.assertions(1)
-    const obj = { foo: { bar: 'baz' } }
-    const reactiveObj = Reactor(obj)
+    const reactiveObj = Reactor({ foo: { bar: 'baz' } })
 
     let callbackInvoked = false
     const callback = state => {
@@ -241,5 +240,20 @@ describe('reactor.subscribe()', () => {
     sentence.update('Spencer is my name!')
     unsubscribe()
     sentence.update('Spencer is NOT my name?')
+  })
+  test('should only notify subscribers when the updated value is different than the pre-updated value', () => {
+    expect.assertions(1)
+    const reactive = Reactor({ foo: { bar: true } })
+
+    let callbackInvoked = false
+    reactive.get(['foo', 'bar']).subscribe(update => {
+      if (callbackInvoked) {
+        expect(update).toBe(false)
+      }
+      callbackInvoked = true
+    })
+
+    reactive.update({ foo: { bar: true } })
+    reactive.update({ foo: { bar: false } })
   })
 })
