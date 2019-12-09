@@ -3,13 +3,6 @@ const { __, reduce, always, pipe, equals, type, ifElse, curry, isNil, map, ident
 
 const { _value, _subject, _parent } = require('./lib/symbols')
 
-const log = label => value => {
-  console.log(`${label}: `, value)
-  return value
-}
-
-const wrap = value => [value]
-
 const method = curry((name, args, object) => pipe(
   prop(name),
   ifElse(
@@ -40,6 +33,8 @@ const isObject = pipe(
   type,
   equals('Object')
 )
+
+const isNotObject = complement(isObject)
 
 const isArray = pipe(
   type,
@@ -90,28 +85,37 @@ const reactivePrototype = {
       always(undefined)
     )(this[_value])
   },
-  update (transform, value = this.valueOf(), isInitial = true) { // TODO cleanup function
+  update (transform, value = this.valueOf(), isInitial = true) {
     const updated = when(isFunction, applyTo(value))(transform)
     const subject = this[_subject]
-    const final = ifElse(
-      always(and(isObject(value), isObject(updated))),
-      pipe(
-        mapObjIndexed((item, key) =>
-          method('update', [prop(key, updated), prop(key, value), false])(item)
-        ),
-        sideEffect(pipe(wrap, method('next', __, subject)))
-      ),
-      (input) => {
-        this[_value] = updated
-        method('next', [updated], subject)
-        return this[_value]
-      }
-    )(this[_value])
+    const parent = this[_parent]
 
-    if (isInitial && isNotNil(this[_parent])) {
+    const result = cond([
+      [
+        always(isObject(value) && isNotObject(updated)),
+        always(this[_value])
+      ], [
+        always(isObject(value) && isObject(updated)),
+        pipe(
+          mapObjIndexed((item, key) => item.update(updated[key], value[key], false)),
+          sideEffect(nextValue => method('next', [nextValue], subject))
+        )
+      ], [
+        T,
+        pipe(
+          sideEffect(() => {
+            this[_value] = updated
+            method('next', [updated], subject)
+          }),
+          always(updated)
+        )
+      ]
+    ])(this[_value])
+
+    if (isInitial && isNotNil(parent)) {
       notifyParents(this)
     }
-    return final
+    return result
   },
   subscribe (callback) {
     if (!isFunction(callback)) {
