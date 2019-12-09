@@ -109,9 +109,23 @@ describe('reactor.update()', () => {
     expect(reactivePerson.get('hobbies').valueOf()[0]).toBe('programming')
 
     reactivePerson.update({ name: 'Bob' })
-    
+
     expect(reactivePerson.valueOf()).toEqual({ name: 'Bob' })
     expect(reactivePerson.get('name').valueOf()).toEqual('Bob')
+  })
+  test('should only update the inner object properties if an identical property name and structure is included in the transform', () => {
+    const reactive = Reactor({ foo: { bar: 'baz' } })
+    reactive.update({ something: 'else', foo: { bar: 'BLAM' } })
+    expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
+
+    reactive.update({ foo: 'not good...' })
+    expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
+
+    reactive.update(undefined)
+    expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
+
+    reactive.update('just a string')
+    expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
   })
 })
 
