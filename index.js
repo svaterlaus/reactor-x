@@ -123,7 +123,8 @@ const reactivePrototype = {
     }
     const value = this.valueOf()
     this[_subject] = when(isNil, always(Subject(value)))(this[_subject])
-    return this[_subject].observe({ next: callback })
+    const id = this[_subject].observe({ next: callback })
+    return () => { this[_subject].cancel(id) }
   }
 }
 

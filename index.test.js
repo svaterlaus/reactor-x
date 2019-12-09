@@ -142,12 +142,6 @@ describe('reactor.subscribe()', () => {
 
     expect(reactivePerson.subscribe(() => {})).not.toBe(undefined)
   })
-  test('should return a number when given a function argument', () => {
-    const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
-    const reactivePerson = Reactor(person)
-
-    expect(typeof reactivePerson.subscribe(() => {})).toBe('number')
-  })
   test('should synchronously invoke the provided callback with the current value of the reactor when invoked', () => {
     expect.assertions(1)
     const person = { name: 'Spencer', age: 25, hobbies: ['programming', 'eating', 'exercise?'] }
@@ -230,5 +224,22 @@ describe('reactor.subscribe()', () => {
       o.foo.bar = 'updated!'
       return o
     })
+  })
+  test('should return an "unsubscribe" function that can be invoked to cancel the update subscription', () => {
+    expect.assertions(1)
+    const sentence = Reactor('this is reactive!')
+
+    let callbackInvoked = false
+    const callback = update => {
+      if (callbackInvoked) {
+        expect(update).toBe('Spencer is my name!')
+      }
+      callbackInvoked = true
+    }
+    const unsubscribe = sentence.subscribe(callback)
+
+    sentence.update('Spencer is my name!')
+    unsubscribe()
+    sentence.update('Spencer is NOT my name?')
   })
 })
