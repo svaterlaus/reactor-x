@@ -1,50 +1,14 @@
 const { Subject } = require('observable-x')
-const { __, reduce, always, pipe, equals, type, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, and, apply, bind, both, all } = require('ramda')
+const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all } = require('ramda')
 
 const { _value, _subject, _parent } = require('./lib/symbols')
-
-const method = curry((name, args, object) => pipe(
-  prop(name),
-  ifElse(
-    isNil,
-    identity,
-    pipe(
-      bind(__, object),
-      apply(__, args)
-    )
-  )
-)(object))
-
-const sideEffect = curry((fn, val) => {
-  fn(val)
-  return val
-})
+const { method, isObject, isArray, isString, isFunction, sideEffect } = require('./lib/util')
 
 const isNotNil = complement(isNil)
 
 const { setPrototypeOf } = Object
 
-const isFunction = pipe(
-  type,
-  equals('Function')
-)
-
-const isObject = pipe(
-  type,
-  equals('Object')
-)
-
 const isNotObject = complement(isObject)
-
-const isArray = pipe(
-  type,
-  equals('Array')
-)
-
-const isString = pipe(
-  type,
-  equals('String')
-)
 
 const getReactiveProp = curry((path, value) => ifElse(
   always(isObject(value)),
