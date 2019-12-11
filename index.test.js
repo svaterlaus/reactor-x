@@ -256,4 +256,37 @@ describe('reactor.subscribe()', () => {
     reactive.update({ foo: { bar: true } })
     reactive.update({ foo: { bar: false } })
   })
+  test('should return a fully non-reactive object given an update object with missing properties', done => {
+    expect.assertions(2)
+    const reactive = Reactor({ foo: { bar: true }, baz: false })
+
+    let callbackInvoked = false
+    reactive.subscribe(updated => {
+      if (callbackInvoked) {
+        const { foo, foo: { bar } } = updated
+        expect(foo[_value]).toBe(undefined)
+        expect(bar[_value]).toBe(undefined)
+        done()
+      }
+      callbackInvoked = true
+    })
+    reactive.update({ foo: 'wrong structure' })
+  })
+})
+
+describe('reactor.toObservable()', () => {
+  test('should return an observable that, when observed, will produce the same update values as subscribe()', done => {
+    expect.assertions(2)
+    const reactive = Reactor({ foo: { bar: true } })
+
+    reactive.toObservable().subscribe({
+      next: e => {
+        expect(e).toEqual({ foo: { bar: true } })
+      }
+    })
+    reactive.subscribe(e => {
+      expect(e).toEqual({ foo: { bar: true } })
+      done()
+    })
+  })
 })
