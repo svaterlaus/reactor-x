@@ -1,5 +1,5 @@
 const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all, equals } = require('ramda')
-const { Subject } = require('observable-x')
+const { Observable, BehaviorSubject } = require('rxjs')
 
 const { _value, _subject, _parent } = require('./lib/symbols')
 const { method, isObject, isArray, isString, isFunction, sideEffect } = require('./lib/util')
@@ -55,7 +55,7 @@ const reactivePrototype = {
     const parent = this[_parent]
 
     if (isObject(value) && isNotObject(updated)) {
-      return this[_value]
+      return value
     }
     const result = ifElse(
       always(isObject(value) && isObject(updated)),
@@ -87,10 +87,22 @@ const reactivePrototype = {
     if (!isFunction(callback)) {
       return undefined
     }
-    const value = this.valueOf()
-    this[_subject] = when(isNil, always(Subject(value)))(this[_subject])
-    const id = this[_subject].observe({ next: callback })
-    return () => { this[_subject].cancel(id) }
+    if (isNil(this[_subject])) {
+      this[_subject] = new BehaviorSubject(this.valueOf())
+    }
+    const subscriber = this[_subject].subscribe({ next: callback })
+    return () => { subscriber.unsubscribe() }
+  },
+  toObservable () {
+    return new Observable(subscriber => {
+      const unsubscribe = this.subscribe(val => {
+        subscriber.next(val)
+      })
+      return () => {
+        unsubscribe()
+        subscriber.complete()
+      }
+    })
   }
 }
 
