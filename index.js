@@ -92,17 +92,6 @@ const reactivePrototype = {
     }
     const subscriber = this[_subject].subscribe({ next: callback })
     return () => { subscriber.unsubscribe() }
-  },
-  toObservable () {
-    return new Observable(subscriber => {
-      const unsubscribe = this.subscribe(val => {
-        subscriber.next(val)
-      })
-      return () => {
-        unsubscribe()
-        subscriber.complete()
-      }
-    })
   }
 }
 
@@ -125,4 +114,12 @@ const Reactor = state => {
   return recur(null, state)
 }
 
-module.exports = Reactor
+const observableFrom = item => new Observable(subscriber => {
+  const unsubscribe = method('subscribe', [val => subscriber.next(val)], item)
+  return unsubscribe
+})
+
+module.exports = {
+  Reactor,
+  observableFrom
+}
