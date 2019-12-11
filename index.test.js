@@ -1,4 +1,4 @@
-const Reactor = require('./index')
+const { Reactor, observableFrom } = require('./index')
 const { _value } = require('./lib/symbols')
 
 describe('Reactor()', () => {
@@ -274,17 +274,17 @@ describe('reactor.subscribe()', () => {
   })
 })
 
-describe('reactor.toObservable()', () => {
-  test('should return an observable that, when observed, will produce the same update values as subscribe()', done => {
+describe('observableFrom()', () => {
+  test('should return an observable that, when subscribed, will produce the same update values as reactor.subscribe()', done => {
     expect.assertions(2)
     const reactive = Reactor({ foo: { bar: true } })
 
-    reactive.toObservable().subscribe({
+    observableFrom(reactive).subscribe({
       next: e => {
         expect(e).toEqual({ foo: { bar: true } })
       }
     })
-    reactive.subscribe(e => {
+    observableFrom(reactive).subscribe(e => {
       expect(e).toEqual({ foo: { bar: true } })
       done()
     })
