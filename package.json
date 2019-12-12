@@ -4,22 +4,20 @@
   "description": "Reactive state management.",
   "author": "Spencer Vaterlaus",
   "license": "MIT",
-  "main": "index.js",
+  "main": "dist/index.js",
   "keywords": [
     "observable",
     "reactive",
     "state"
   ],
   "scripts": {
+    "start": "watch 'rm -rf dist/* && npx babel src --out-dir dist' ./src",
     "test": "jest"
   },
   "standard": {
     "env": [
       "node",
       "jest"
-    ],
-    "globals": [
-      "fail"
     ]
   },
   "homepage": "https://github.com/sVaterlaus/reactor-x#readme",
@@ -31,6 +29,9 @@
     "url": "https://github.com/sVaterlaus/reactor-x/issues"
   },
   "devDependencies": {
+    "@babel/cli": "^7.7.5",
+    "@babel/core": "^7.7.5",
+    "@babel/preset-env": "^7.7.6",
     "jest": "^24.9.0",
     "standard": "^14.3.1"
   },

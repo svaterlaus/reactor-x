@@ -1,4 +1,5 @@
 const { __, pipe, prop, curry, ifElse, isNil, identity, bind, apply, type, equals } = require('ramda')
+const { Observable } = require('rxjs')
 
 const method = curry((name, args, object) => pipe(
   prop(name),
@@ -37,11 +38,15 @@ const isString = pipe(
   equals('String')
 )
 
+const observableFrom = item =>
+  new Observable(subscriber => method('subscribe', [val => subscriber.next(val)], item))
+
 module.exports = {
   method,
   sideEffect,
   isFunction,
   isObject,
   isArray,
-  isString
+  isString,
+  observableFrom
 }

@@ -1,8 +1,8 @@
 const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all, equals } = require('ramda')
 const { Observable, BehaviorSubject } = require('rxjs')
 
-const { _value, _subject, _parent } = require('./lib/symbols')
-const { method, isObject, isArray, isString, isFunction, sideEffect } = require('./lib/util')
+const { _value, _subject, _parent } = require('./symbols')
+const { method, isObject, isArray, isString, isFunction, sideEffect } = require('./util')
 
 const { setPrototypeOf } = Object
 
@@ -114,12 +114,4 @@ const Reactor = state => {
   return recur(null, state)
 }
 
-const observableFrom = item => new Observable(subscriber => {
-  const unsubscribe = method('subscribe', [val => subscriber.next(val)], item)
-  return unsubscribe
-})
-
-module.exports = {
-  Reactor,
-  observableFrom
-}
+module.exports = Reactor
