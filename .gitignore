@@ -68,3 +68,6 @@ temp
 
 # system files
 .DS_Store
+
+# transpiled production files
+dist/

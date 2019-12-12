@@ -1,5 +1,5 @@
 const { Reactor, observableFrom } = require('./index')
-const { _value } = require('./lib/symbols')
+const { _value } = require('./symbols')
 
 describe('Reactor()', () => {
   test('should return an object with a _value symbol property (a reactive item) for any given input', () => {
