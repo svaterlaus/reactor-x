@@ -1,5 +1,5 @@
-const { Reactor, observableFrom } = require('./index')
-const { _value } = require('./symbols')
+const { Reactor, observableFrom } = require('../src/index')
+const { _value } = require('../src/symbols')
 
 describe('Reactor()', () => {
   test('should return an object with a _value symbol property (a reactive item) for any given input', () => {
@@ -110,11 +110,12 @@ describe('reactor.update()', () => {
 
     reactivePerson.update({ name: 'Bob' })
 
-    expect(reactivePerson.valueOf()).toEqual({ name: 'Bob' })
-    expect(reactivePerson.get('name').valueOf()).toEqual('Bob')
+    expect(reactivePerson.valueOf().name).toBe('Bob')
+    expect(reactivePerson.get('name').valueOf()).toBe('Bob')
   })
   test('should only update the inner object properties if an identical property name and structure is included in the transform', () => {
     const reactive = Reactor({ foo: { bar: 'baz' } })
+
     reactive.update({ something: 'else', foo: { bar: 'BLAM' } })
     expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
 
@@ -125,6 +126,9 @@ describe('reactor.update()', () => {
     expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
 
     reactive.update('just a string')
+    expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
+
+    reactive.update({ foo: {} })
     expect(reactive).toEqual(Reactor({ foo: { bar: 'BLAM' } }))
   })
 })
@@ -177,7 +181,6 @@ describe('reactor.subscribe()', () => {
 
     let callbackInvoked = false
     const callback = state => {
-      console.log('huh?')
       if (callbackInvoked) {
         expect(state).toEqual(updated)
         done()
@@ -270,7 +273,7 @@ describe('reactor.subscribe()', () => {
       }
       callbackInvoked = true
     })
-    reactive.update({ foo: 'wrong structure' })
+    reactive.update({ foo: {}, baz: true })
   })
 })
 

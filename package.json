@@ -5,6 +5,9 @@
   "author": "Spencer Vaterlaus",
   "license": "MIT",
   "main": "dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "keywords": [
     "observable",
     "reactive",
