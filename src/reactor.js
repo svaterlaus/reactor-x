@@ -1,5 +1,5 @@
-const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all, equals } = require('ramda')
-const { Observable, BehaviorSubject } = require('rxjs')
+const { reduce, always, pipe, ifElse, curry, isNil, map, identity, cond, prop, T, when, complement, mapObjIndexed, applyTo, both, all, equals, has } = require('ramda')
+const { BehaviorSubject } = require('rxjs')
 
 const { _value, _subject, _parent } = require('./symbols')
 const { method, isObject, isArray, isString, isFunction, sideEffect } = require('./util')
@@ -60,7 +60,11 @@ const reactivePrototype = {
     const result = ifElse(
       always(isObject(value) && isObject(updated)),
       pipe(
-        mapObjIndexed((item, key) => item.update(updated[key], value[key], false)),
+        mapObjIndexed((item, key) => ifElse(
+          always(has(key, value) && has(key, updated)),
+          method('update', [updated[key], updated[value], false]),
+          always(value[key])
+        )(item)),
         sideEffect(nextValue => {
           if (notEquals(value, nextValue)) {
             method('next', [nextValue], subject)
