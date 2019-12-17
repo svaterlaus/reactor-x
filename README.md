@@ -7,9 +7,9 @@ Want to use observables? Wrap any reactor with `observableFrom(reactor)` for eas
 ## Installation
 
 ```bash
-npm install reactor-x
+npm install @crocodile/reactor-x
 # or
-yarn add reactor-x
+yarn add @crocodile/reactor-x
 ```
 
 ## Usage
